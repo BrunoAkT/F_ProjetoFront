@@ -1,20 +1,21 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import App from "./login";
+import Menu from "./menu";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-export default function App() {
+
+const stack = createNativeStackNavigator();
+
+export default function Pagina() {
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Menu/>
+    /*
+    <NavigationContainer>
+      <stack.Navigator>
+        <stack.Screen name="Login" component={App} options={{headerShown: false}}/>
+        <stack.Screen name="Menu" component={Menu} options={{headerShown: false}}/>
+      </stack.Navigator>
+    </NavigationContainer> */
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
