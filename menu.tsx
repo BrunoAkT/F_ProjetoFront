@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
-import { Button, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { Picker } from '@react-native-picker/picker'; // Instale com: npm install @react-native-picker/picker
+import { Alert, Button, FlatList, Image, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons'
 
 
@@ -13,41 +13,88 @@ export default function Menu() {
     const [linkImage, setLinkImage] = useState("");
     const [novaCondicao, setNovaCondicao] = useState("Factory New");
 
+    const [consulta, setConsulta] = useState("");
+    const [novosItens, setNovosItens] = useState([]);
+    const [editarItem, setEditarItem] = useState(null);
+
+
     useEffect(() => {
         carregarNome()
+        carregarItens()
     }, [])
 
     async function carregarNome() {
         const nomeSalvo = await AsyncStorage.getItem('nome');
         if (nomeSalvo) setNome(nomeSalvo);
     }
+    async function carregarItens() {
+        const itensSalvos = await AsyncStorage.getItem('itens');
+        if (itensSalvos) setNovosItens(JSON.parse(itensSalvos));
+    }
+    async function salvarItem() {
+        if (!novoNome.trim() || !novoValor.trim() || !novaCondicao.trim() || !linkImage.trim()) {
+            Alert.alert('Erro', 'Preencha todos os campos');
+            return;
+        }
 
-    const itens = [{
-        id: 1,
-        name: 'Butter-fly Gamma Doppler',
-        Exterior: 'Factory New',
-        float: 0.0000156,
-        price: 124000.00,
-        image: 'https://community.fastly.steamstatic.com/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf0ebcZThQ6tCvq4GGqPD1PrbQqW9e-NV9j_v-5YT0m1HnlB81NDG3Oo7HcwM5NQ7U_gO8yb28gZG07ZvIzXdivXMg4HvUyhDkiR4eZ-Rv1qGACQLJqUKvgfw/360fx360f'
-    },
-    {
-        id: 2,
-        name: 'M9 tiger tooth',
-        Exterior: 'Factory New',
-        float: 0.0234211,
-        price: 5000.00,
-        image: 'https://steamcommunity-a.akamaihd.net/economy/image/-9a81dlWLwJ2UUGcVs_nsVtzdOEdtWwKGZZLQHTxDZ7I56KU0Zwwo4NUX4oFJZEHLbXH5ApeO4YmlhxYQknCRvCo04DEVlxkKgpovbSsLQJf3qr3czxb49KzgL-KmcjgOrzUhFRe-sR_jez--YXygED6_0o4ZjildoDBdVA_ZguC-gO9yeq90Je4vZuYwHdguSgm5H7am0TkhAYMMLKzxtQfiA'
+        try {
+            let listaAtualizada;
 
-    }];
+            if (editarItem) {
+                listaAtualizada = novosItens.map(item =>
+                    item.id === editarItem.id
+                        ? {
+                            ...item,
+                            nome: novoNome,
+                            valor: parseFloat(novoValor),
+                            condicao: novaCondicao,
+                            imagem: linkImage
+                        }
+                        : item
+                );
+            } else {
+                const novoItem = {
+                    id: String(Math.random().toString(36).substr(2, 9)),
+                    nome: novoNome,
+                    valor: parseFloat(novoValor),
+                    floart: 0.0000214,
+                    condicao: novaCondicao,
+                    imagem: linkImage,
+                };
+                listaAtualizada = [...novosItens, novoItem];
+            }
 
-    const handleEdit = (id) => {
-        console.log(`Editar item com ID: ${id}`);
+            await AsyncStorage.setItem('itens', JSON.stringify(listaAtualizada));
+            setNovosItens(listaAtualizada);
+
+            setNovoNome('');
+            setNovoValor('');
+            setNovaCondicao('Factory New');
+            setLinkImage('');
+            setEditarItem(null);
+
+            Alert.alert('Sucesso', 'Item salvo com sucesso');
+        } catch (error) {
+            console.error('Erro ao salvar:', error);
+            Alert.alert('Erro', 'Não foi possível salvar o item');
+        }
+    }
+    function handleEdit(id) {
+        const itemParaEditar = novosItens.find(item => item.id === id);
+        if (itemParaEditar) {
+            setNovoNome(itemParaEditar.nome);
+            setNovoValor(itemParaEditar.valor.toString());
+            setNovaCondicao(itemParaEditar.condicao);
+            setLinkImage(itemParaEditar.imagem);
+            setEditarItem(itemParaEditar); // Agora armazenamos o objeto completo
+        }
+    };
+    async function DeletarItem(id) {
+        const novaLista = novosItens.filter(item => item.id !== id); // Filtra o item que será excluído
+        setNovosItens(novaLista); // Atualiza o estado com a nova lista
+        await AsyncStorage.setItem('itens', JSON.stringify(novaLista));
     };
 
-    const handleDelete = (id) => {
-        console.log(`Excluir item com ID: ${id}`);
-    };
-    
     return <View style={styles.container}>
         <View style={styles.header}>
             <Text style={styles.titulo}>Inventário</Text>
@@ -56,7 +103,7 @@ export default function Menu() {
         </View>
 
         <View>
-            <Text style={styles.msg}>Inserir Novo item</Text>
+            <Text style={styles.msg}>{editarItem ? "Editando Item" : "Inserir Novo Item"}</Text>
             <View style={styles.inputLabel}>
                 <TextInput
                     placeholder="Nome:"
@@ -90,37 +137,44 @@ export default function Menu() {
                     onChangeText={setLinkImage}
                     style={styles.input}
                 />
-                <TouchableOpacity style={styles.addButton}>
-                    <Text style={styles.addButtonText}>Adicionar</Text>
+                <TouchableOpacity style={styles.addButton} onPress={salvarItem}>
+                    <Text style={styles.addButtonText}>{editarItem ? "Salvar Edição" : "Adicionar"}</Text>
                 </TouchableOpacity>
-                
+
             </View>
         </View>
         <View style={styles.MasterTitle}>
             <Text style={styles.masterTitleCaption}>Item</Text>
+            <TextInput placeholder="🔍︎" style={styles.search} onChangeText={setConsulta}></TextInput>
             <Text style={styles.masterPriceCaption}>Price</Text>
         </View>
         <FlatList
             style={styles.flatlist}
-            data={itens}
-            keyExtractor={item => item.id.toString()}
+            data={novosItens.filter(item =>
+                item.nome.toLowerCase().includes(consulta.toLowerCase()) // Filtra pelo nome
+            )}
+            keyExtractor={item => item.id}
             renderItem={({ item }) => (
                 <View style={styles.item}>
                     <Image
-                        source={{ uri: item.image }} // Carrega a imagem da URL
+                        source={{ uri: item.imagem }} // Carrega a imagem da URL
                         style={styles.itemImage} // Estilo da imagem
                     />
                     <View style={styles.itemInfo}>
-                        <Text style={styles.itemname}>{item.name}</Text>
+                        <Text style={styles.itemname}>{item.nome}</Text>
                         <View style={styles.caption}>
                             <Text style={styles.TitleCaption}>Condição: </Text>
-                            <Text style={styles.Itemfloat}>{item.Exterior}</Text>
+                            <Text style={styles.Itemfloat}>{item.condicao}
+                                {item.condicao === 'Factory New' ? <Text style={styles.itemFloart}> {item.floart}</Text> : ''}
+                            </Text>
                             {/* <Text style={styles.Itemfloat}>{item.Exterior}</Text> */}
                         </View>
 
                     </View>
                     <View style={styles.itemPriceContainer}>
-                        <Text style={styles.itemprice}>{item.price.toLocaleString('pt-br', { style: 'currency', currency: 'BRL' })}</Text>
+                        <Text style={styles.itemprice}>
+                            {item.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </Text>
                     </View>
                     <View style={styles.itemActions}>
                         <Icon
@@ -135,7 +189,7 @@ export default function Menu() {
                             size={35}
                             color="red"
                             style={styles.Icon}
-                            onPress={() => handleDelete(item.id)}
+                            onPress={() => DeletarItem(item.id)}
                         />
                     </View>
                 </View>
@@ -274,19 +328,32 @@ const styles = StyleSheet.create({
         fontSize: 20,
         textDecorationLine: 'underline',
     },
-    masterPriceCaption :{
+    masterPriceCaption: {
         color: 'Black',
         fontWeight: 'bold',
         marginRight: 200,
         fontSize: 20,
         textDecorationLine: 'underline',
     },
+    search: {
+        backgroundColor: '#f5f5f5',
+        width: 300,
+        height: 30,
+        padding: 10,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+    },
     itemActions: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    Icon:{
+    Icon: {
         margin: 10,
+    },
+    itemFloart: {
+        color: 'red',
+        fontWeight: 'bold',
     }
 });
