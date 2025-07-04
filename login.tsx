@@ -21,7 +21,7 @@ export default function App() {
     async function irParaTelaLogada(){
         await AsyncStorage.setItem('nome', nome);
 
-        if (nome === 'Bruno' && senha === '123'){
+        if (nome === 'Usuario' && senha === '123'){
             navigation.navigate('Menu'); //Erro que não afeta a aplicação
         } 
     }

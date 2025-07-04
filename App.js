@@ -9,13 +9,11 @@ const stack = createNativeStackNavigator();
 export default function Pagina() {
 
   return (
-    <Menu/>
-    /*
     <NavigationContainer>
       <stack.Navigator>
         <stack.Screen name="Login" component={App} options={{headerShown: false}}/>
         <stack.Screen name="Menu" component={Menu} options={{headerShown: false}}/>
       </stack.Navigator>
-    </NavigationContainer> */
+    </NavigationContainer>
   );
 }

@@ -33,7 +33,11 @@ export default function Menu() {
     }
     async function salvarItem() {
         if (!novoNome.trim() || !novoValor.trim() || !novaCondicao.trim() || !linkImage.trim()) {
-            Alert.alert('Erro', 'Preencha todos os campos');
+            if (Platform.OS === 'web') {
+                window.alert('Erro: Valores Indefinidos');
+            } else {
+                Alert.alert('Erro', "Valores Indefinidos");
+            }
             return;
         }
 
@@ -73,25 +77,31 @@ export default function Menu() {
             setLinkImage('');
             setEditarItem(null);
 
-            Alert.alert('Sucesso', 'Item salvo com sucesso');
-        } catch (error) {
+            if (Platform.OS === 'web') {
+                window.alert(`Sucesso: Item Salvo com sucesso`);
+              } else {
+                Alert.alert('Sucesso', 'Item Salvo com sucesso');
+              }        } catch (error) {
             console.error('Erro ao salvar:', error);
-            Alert.alert('Erro', 'Não foi possível salvar o item');
-        }
+            if (Platform.OS === 'web') {
+                window.alert(`Erro: Erro ao salvar operação`);
+              } else {
+                Alert.alert('Erro', "Erro ao salvar operação");
+              }        }
     }
-    function handleEdit(id) {
+    function EditarItem(id) {
         const itemParaEditar = novosItens.find(item => item.id === id);
         if (itemParaEditar) {
             setNovoNome(itemParaEditar.nome);
             setNovoValor(itemParaEditar.valor.toString());
             setNovaCondicao(itemParaEditar.condicao);
             setLinkImage(itemParaEditar.imagem);
-            setEditarItem(itemParaEditar); // Agora armazenamos o objeto completo
+            setEditarItem(itemParaEditar); 
         }
     };
     async function DeletarItem(id) {
-        const novaLista = novosItens.filter(item => item.id !== id); // Filtra o item que será excluído
-        setNovosItens(novaLista); // Atualiza o estado com a nova lista
+        const novaLista = novosItens.filter(item => item.id !== id);
+        setNovosItens(novaLista); 
         await AsyncStorage.setItem('itens', JSON.stringify(novaLista));
     };
 
@@ -151,14 +161,14 @@ export default function Menu() {
         <FlatList
             style={styles.flatlist}
             data={novosItens.filter(item =>
-                item.nome.toLowerCase().includes(consulta.toLowerCase()) // Filtra pelo nome
+                item.nome.toLowerCase().includes(consulta.toLowerCase()) 
             )}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
                 <View style={styles.item}>
                     <Image
-                        source={{ uri: item.imagem }} // Carrega a imagem da URL
-                        style={styles.itemImage} // Estilo da imagem
+                        source={{ uri: item.imagem }} 
+                        style={styles.itemImage} 
                     />
                     <View style={styles.itemInfo}>
                         <Text style={styles.itemname}>{item.nome}</Text>
@@ -167,7 +177,6 @@ export default function Menu() {
                             <Text style={styles.Itemfloat}>{item.condicao}
                                 {item.condicao === 'Factory New' ? <Text style={styles.itemFloart}> {item.floart}</Text> : ''}
                             </Text>
-                            {/* <Text style={styles.Itemfloat}>{item.Exterior}</Text> */}
                         </View>
 
                     </View>
@@ -182,7 +191,7 @@ export default function Menu() {
                             size={35}
                             color="blue"
                             style={styles.Icon}
-                            onPress={() => handleEdit(item.id)}
+                            onPress={() => EditarItem(item.id)}
                         />
                         <Icon
                             name="delete"
